@@ -1,6 +1,7 @@
 let status = {
 	neverSynced: true,
-	workBreakIntervals: [2400, 600],
+	// workBreakIntervals: [2400, 600],
+	workBreakIntervals: [5, 8],
 	isBreakTime: false,
 	isPaused: true,
 	lastStartStop: {
@@ -12,7 +13,7 @@ let status = {
 let secsLeft = status.workBreakIntervals[Number(status.isBreakTime)];
 
 // Websocket setup
-const socket = new WebSocket('wss://localhost:8080');
+const socket = new WebSocket('wss://pomo.scyy.fi');
 socket.addEventListener('open', (evt) => {});
 socket.addEventListener('message', (evt) => {
 	const nowISO = new Date().toISOString();
@@ -23,8 +24,8 @@ socket.addEventListener('message', (evt) => {
 		pauseTimer();
 	} else {
 		let serverMessage = JSON.parse(evt.data);
-		if (serverMessage.event !== "statePush") {
-			alert("Hello! Something is wrong!");
+		if (serverMessage.event !== "initStatePush") {
+			alert(`Hello! You have gotten event ${serverMessage.event} with unimpelmented handler`);
 		}
 		let serverStatus = serverMessage.state;
 		console.log("Got serverStatus:", serverStatus);
@@ -51,7 +52,7 @@ socket.addEventListener('message', (evt) => {
 					computedSecsLeft = secsLeft - secsPassed;
 				} else if (secsPassed <= status.lastStartStop.secsLeft + otherModeInterval) {
 					computedSecsLeft = otherModeInterval + status.lastStartStop.secsLeft - secsPassed;
-					// status.isBreakTime = !status.isBreakTime; // TODO: some version of this necessary
+					status.isBreakTime = !status.isBreakTime;
 					debugVar = otherModeInterval;
 				} else {
 					computedSecsLeft = period + status.lastStartStop.secsLeft - secsPassed;

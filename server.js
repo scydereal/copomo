@@ -8,7 +8,8 @@ const sessions = {
 		'name': 'default',
 		passHash: 'dsasfllhjatyjnkcliuasdhliuahta',
 		lastTimerState: {
-			workBreakIntervals: [2400, 600],
+			// workBreakIntervals: [2400, 600],
+			workBreakIntervals: [5, 8],
 			isBreakTime: false,
 			isPaused: true,
 			lastStartStop: null
@@ -67,7 +68,7 @@ wss.on('connection', (socket) => {
 	session.clients.push({id: socketId, socketObj: socket});
 	console.log(`${timestr()}: Adding connection with id ${socketId}, connections are now ${session.clients.map((c) => c.id)}`);
 	
-	socket.send(JSON.stringify({event: "statePush", state: session.lastTimerState}));
+	socket.send(JSON.stringify({event: "initStatePush", state: session.lastTimerState}));
 
 	socket.on('message', (message) => {
 		const msg = JSON.parse(message);
