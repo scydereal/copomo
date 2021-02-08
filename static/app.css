@@ -1,3 +1,8 @@
+@font-face {
+	font-family: "stmarie";
+	src: url("fonts/st-marie/StMarie-Thin.otf");
+}
+
 body {
 	background-color: #07010B;
 	color: white;
@@ -7,7 +12,7 @@ body {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	margin-top: 15%;
+	margin-top: 10%;
 }
 
 .timercontainer {
@@ -18,14 +23,17 @@ body {
 }
 
 #mode {
-	font-family: fantasy, serif;
-	opacity: 0.35;
-	font-size: 30px;
+	font-family: "stmarie", fantasy;
+	opacity: 0.4;
+	font-size: 32px;
 }
 
 #timer {
-	font-size: 35px;
+	font-size: 70px;
 	margin: 15px 0;
+}
+#timer:hover {
+	color: white;
 }
 
 button {
@@ -35,13 +43,13 @@ button {
 	border-radius: 5px;
 	padding: 7px;
 	margin-top: 10px;
-	font-size: 15px;
+	font-size: 14px;
 	opacity: 0.6;
-	width: 100%;
+	width: 90%;
 }
 
 button:hover {
-	opacity: 0.9;
+	opacity: 1;
 }
 
 #footer {

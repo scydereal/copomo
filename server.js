@@ -10,9 +10,10 @@ const sessions = {
 		lastTimerState: {
 			workBreakIntervals: [2400, 1200],
 			// workBreakIntervals: [5, 8],
-			isBreakTime: false,
 			isPaused: true,
-			lastStartStop: null
+			isBreakTime: false,
+			secsLeftAtTimestamp: 2400,
+			timestamp: null
 		},
 		clients: [
 			// {id: 1234, socketObj: socketObj}
@@ -20,7 +21,6 @@ const sessions = {
 	}
 }
 
-//create a server object:
 const server = http.createServer(function (req, res) {
 	if (req.method === 'GET') {
 		let reqPath = path.join(
@@ -41,29 +41,25 @@ const server = http.createServer(function (req, res) {
 			res.end(data);
 		});
 	}
-//  res.write('Hello World!'); //write a response to the client
-//  res.end(); //end the response
 });
 
 let nextClientSocketId = 1000;
 
-const printObj = (o) => {
-	// for (key in o) {
-	// 	if (key == 'lastStartStop') printObj(o.key);
-	// 	else console.log(`${key}: ${o[key]}`) 
-	// }
-	console.log(JSON.stringify(o, null, 2));
-}
 const timestr = () => {
 	return new Date().toISOString().substr(11, 8);
-}
+};
+const prn = (s) => {
+	console.log(`[${timestr()}] ${s}`);
+};
+const printObj = (o) => {
+	prn(JSON.stringify(o, null, 2));
+};
 
 const wss = new ws.Server({server});
 wss.on('connection', (socket) => {
-	const session = sessions.default;
 	const socketId = nextClientSocketId++;
-	session.clients.push({id: socketId, socketObj: socket});
-	console.log(`${timestr()}: Adding connection with id ${socketId}, connections are now ${session.clients.map((c) => c.id)}`);
+	sessions.default.clients.push({id: socketId, socketObj: socket});
+	prn(`Adding connection with id ${socketId}, connections are now ${sessions.default.clients.map((c) => c.id)}`);
 	
 	printObj(sessions.default.lastTimerState);
 	socket.send(JSON.stringify({state: sessions.default.lastTimerState, event: "initStatePush"}));
@@ -71,27 +67,21 @@ wss.on('connection', (socket) => {
 	socket.on('message', (message) => {
 		const msg = JSON.parse(message);
 		const event = msg.event;
-		console.log(`${timestr()}: ${socketId} said ${JSON.stringify(msg, null, 2)}`);
+		prn(`${socketId} said ${JSON.stringify(msg, null, 2)}`);
 		switch(event) {
 			case 'close':
-				session.clients = session.clients.filter(function(client) {
+				sessions.default.clients = sessions.default.clients.filter(function(client) {
 					return client.id !== socketId;
 				});
-				console.log(`${timestr()}: Removed connection ${socketId}, connections are now ${session.clients.map((c) => c.id)}`);
-			case 'zeroify':
-				session.lastTimerState = msg.state;
-				printObj(session.lastTimerState);
-				session.clients.forEach(function(client) {
-					if (socketId !== client.id) client.socketObj.send(message);
-					else console.log("skipping client");
-				});
+				prn(`Removed connection ${socketId}, connections are now ${sessions.default.clients.map((c) => c.id)}`);
 				break;
+			case 'zeroify':
 			case 'start':
 			case 'stop': // start or stop
-				session.lastTimerState = msg.state;
-				printObj(session.lastTimerState);
-				session.clients.forEach(function(client) {
-					client.socketObj.send(message);
+				sessions.default.lastTimerState = msg.state;
+				prn("Changed timer state to client-given state.")
+				sessions.default.clients.forEach(function(client) {
+					if (socketId !== client.id) client.socketObj.send(message);
 				});
 				break;
 			default:
