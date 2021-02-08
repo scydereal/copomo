@@ -71,7 +71,7 @@ wss.on('connection', (socket) => {
 	socket.on('message', (message) => {
 		const msg = JSON.parse(message);
 		const event = msg.event;
-		console.log(`${timestr()}: ${socketId} said ${msg}`);
+		console.log(`${timestr()}: ${socketId} said ${JSON.stringify(msg, null, 2)}`);
 		switch(event) {
 			case 'close':
 				session.clients = session.clients.filter(function(client) {
@@ -86,12 +86,16 @@ wss.on('connection', (socket) => {
 					else console.log("skipping client");
 				});
 				break;
-			default: // start or stop
+			case 'start':
+			case 'stop': // start or stop
 				session.lastTimerState = msg.state;
 				printObj(session.lastTimerState);
 				session.clients.forEach(function(client) {
 					client.socketObj.send(message);
 				});
+				break;
+			default:
+				break;
 		}
 	})
 });
