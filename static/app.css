@@ -18,9 +18,9 @@ body {
 }
 
 #mode {
-	font-family: fantasy;
-	opacity: 0.4;
-	font-size: 25px;
+	font-family: fantasy, serif;
+	opacity: 0.35;
+	font-size: 30px;
 }
 
 #timer {

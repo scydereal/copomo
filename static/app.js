@@ -1,10 +1,10 @@
 let status = {
 	neverSynced: true,
-	// workBreakIntervals: [2400, 600],
-	workBreakIntervals: [5, 8],
+	workBreakIntervals: [2400, 1200],
+	// workBreakIntervals: [5, 8],
 	isBreakTime: false,
 	isPaused: true,
-	lastStartStop: {
+	lastStartStop: { // on client, this value means last LOCAL start/stop. Other clients' propagate start/stops will not affect this.
 		secsLeft: null,
 		timestamp: null
 	}
@@ -18,24 +18,25 @@ socket.addEventListener('open', (evt) => {});
 socket.addEventListener('message', (evt) => {
 	const nowISO = new Date().toISOString();
 	console.log(nowISO.substr(11, 8), evt.data);
-	if (evt.data === 'start') {
+	const message = JSON.parse(evt.data);
+	const event = message.event;
+	if (event === 'start') {
 		startTimer();
-	} else if (evt.data === 'stop') {
+	} else if (event === 'stop') {
 		pauseTimer();
-	} else {
-		let serverMessage = JSON.parse(evt.data);
-		if (serverMessage.event !== "initStatePush") {
-			alert(`Hello! You have gotten event ${serverMessage.event} with unimpelmented handler`);
-		}
-		let serverStatus = serverMessage.state;
-		console.log("Got serverStatus:", serverStatus);
+	} else if (event === 'zeroify') {
+		status = message.state;
+		secsLeft = status.lastStartStop.secsLeft;
+		updateTimerUIToMatchStatus();
+		pauseTimer();
+	} else if (event === 'initStatePush' && typeof message.state !== 'undefined') { // why sometimes undefined? big mystery
+		console.log("Got serverStatus:", message.state);
 
-		if (status.neverSynced && serverStatus.lastStartStop !== null) { // just handle this for now
-			status = serverStatus;
+		if (status.neverSynced && message.state.lastStartStop !== null) { // just handle this for now
+			status = message.state;
+			status.neverSynced = false;
 			if (status.isPaused) {
-				updateTimerWorkOrBreak();
-				updateTimerSecsLeft(status.lastStartStop.secsLeft);
-				updateTimerStartStopButton();
+				secsLeft = status.lastStartStop.secsLeft;
 			} else {
 				let msSince = new Date(nowISO) - new Date(status.lastStartStop.timestamp);
 				let secsPassed = Math.ceil(msSince/1000);
@@ -61,10 +62,9 @@ socket.addEventListener('message', (evt) => {
 				setTimeout(tick, 500);
 				console.log(`Now is ${nowISO} and server's timestamp is ${status.lastStartStop.timestamp}, for a ms diff of msSince ${msSince} (${secsPassed}s). Computed secs left is offset ${debugVar} + secsLeft ${status.lastStartStop.secsLeft} - secsPassed ${secsPassed} => ${computedSecsLeft}s, or ${computedSecsLeft/60}min`);
 
-				updateTimerWorkOrBreak();
-				updateTimerSecsLeft(computedSecsLeft);
-				updateTimerStartStopButton();
+				secsLeft = computedSecsLeft;
 			}
+			updateTimerUIToMatchStatus();
 		}
 	}
 });
@@ -80,6 +80,7 @@ const audio = [new Audio('static/chime_cheeky.mp3'), new Audio('static/doublechi
 const mode = document.getElementById('mode');
 const timer = document.getElementById('timer');
 const startStop = document.getElementById('startstop')
+const zeroifyButton = document.getElementById('zeroify');
 
 function updateTimerWorkOrBreak(isBreak) {
 	if (typeof isBreak !== 'undefined') status.isBreakTime = isBreak;
@@ -99,10 +100,13 @@ function updateTimerStartStopButton(isPaused) {
 	if (typeof isPaused !== 'undefined') status.isPaused = isPaused;
 	startStop.textContent = status.isPaused ? 'Start' : 'Stop';
 }
+function updateTimerUIToMatchStatus() {
+	updateTimerWorkOrBreak();
+	updateTimerSecsLeft();
+	updateTimerStartStopButton();
+}
 
-updateTimerWorkOrBreak(status.isBreakTime);
-updateTimerSecsLeft(status.secsLeft);
-updateTimerStartStopButton(status.isPaused);
+updateTimerUIToMatchStatus();
 
 let interval = null;
 function tick() {
@@ -134,9 +138,21 @@ startStop.addEventListener('click', function(e) {
 	status.lastStartStop = {timestamp: new Date().toISOString(), secsLeft: secsLeft};
 	if (status.isPaused) {
 		startTimer();
-		socket.send(JSON.stringify({event: 'start', status: status}));
+		socket.send(JSON.stringify({event: 'start', state: status}));
 	} else {
 		pauseTimer();
-		socket.send(JSON.stringify({event: 'stop', status: status}));
+		socket.send(JSON.stringify({event: 'stop', state: status}));
 	}
+});
+
+zeroifyButton.addEventListener('click', function(e) {
+	pauseTimer();
+	status.isBreakTime = !status.isBreakTime;
+	status.lastStartStop = {
+		timestamp: new Date().toISOString(),
+		secsLeft: status.workBreakIntervals[Number(status.isBreakTime)]
+	};
+	secsLeft = status.lastStartStop.secsLeft;
+	socket.send(JSON.stringify({event: 'zeroify', state: status}));
+	updateTimerUIToMatchStatus();
 });
