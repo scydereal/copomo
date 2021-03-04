@@ -24,13 +24,13 @@ body {
 
 #mode {
 	font-family: "stmarie", fantasy;
-	opacity: 0.4;
-	font-size: 32px;
+	opacity: 0.5;
+	font-size: 35px;
 }
 
 #timer {
 	font-size: 70px;
-	margin: 15px 0;
+	margin: 10px 0;
 }
 #timer:hover {
 	color: white;
@@ -45,11 +45,61 @@ button {
 	margin-top: 10px;
 	font-size: 14px;
 	opacity: 0.6;
-	width: 90%;
+	width: 170px;
+	outline: none;
 }
 
 button:hover {
 	opacity: 1;
+}
+
+.change-intervals {
+	padding: 10px;
+	transition: 0.5s;
+	display: none;
+	overflow: hidden;
+	width: 100%;
+	padding-left: 25px;
+
+	/* flex-direction: column;
+	align-items: center; */
+}
+
+
+label {
+	color: white;
+	opacity: 0.65;
+	font-family:  sans-serif;
+	font-size: 14px;
+}
+
+input {
+	border: 0;
+	outline: none;
+	/* border-bottom: 1px solid white; */
+	background: transparent;
+	color: white;
+	width: 50px;
+	font-size: 18px;
+	-webkit-appearance: none;
+	-moz-appearance: textfield;
+}
+
+input:focus {
+	border-bottom: 2px solid white;
+}
+
+
+#submit-intervals {
+	background-color: transparent;
+	color: white;
+	border: 1px solid white;
+	border-radius: 5px;
+	padding: 7px;
+	margin-top: 10px;
+	font-size: 14px;
+	outline: none;
+	width: 120px;
 }
 
 #footer {

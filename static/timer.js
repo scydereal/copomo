@@ -1,5 +1,5 @@
 const workMins = 40;
-const breakMins = 20;
+const breakMins = 10;
 
 class Timer {
 	constructor(callbacks) {
@@ -9,7 +9,9 @@ class Timer {
 		this.isBreakTime = false;
 		this.isPaused = true;
 		this.secsLeft = this.getCurrentIntervalSeconds();
-		this.setIsBreak(false);
+		this.startPeg = null;
+
+		this.setIsBreak(false); // this touches 'isBreakTime' but JS won't recognize the object member as being established in the constructor unless I touch it literally within the function. Ugh.
 		this.setIsPaused(true);
 		this.setSecsLeft(this.getCurrentIntervalSeconds());
 
@@ -24,7 +26,7 @@ class Timer {
 	}
 
 	toggleWorkBreak() {
-		setIsBreak(!this.isBreakTime);
+		this.setIsBreak(!this.isBreakTime);
 	}
 
 	setIsBreak(b) {
@@ -42,19 +44,37 @@ class Timer {
 		this.callbacks.onTimeChange(s);
 	}
 
+	setNewIntervals(arr) {
+		this.workBreakIntervals = arr;
+		this.callbacks.onIntervalChange(arr[0], arr[1]);
+	}
+
 	tick() {
-		this.tickInterval = setTimeout(this.tick.bind(this), 1000);
-		console.log(`Tick: advancing from secsLeft = ${this.secsLeft}. Timer state: ${this.toString()}`);
-		if (this.secsLeft === 0) {
-			toggleWorkBreak();
+		let timeoutMs = 1000;
+		if (this.lastTickTime !== undefined) {
+			// TODO: this is no good either.
+			const now = new Date();
+			const msSinceLastTick = now - this.lastTickTime;
+			this.lastTickTime = now;
+			timeoutMs = 2000 - msSinceLastTick;
+		} else {
+			this.lastTickTime = new Date();
+		}
+		
+		this.tickInterval = setTimeout(this.tick.bind(this), timeoutMs);
+
+		if (this.secsLeft <= 0) {
+			this.toggleWorkBreak();
 			this.setSecsLeft(this.getCurrentIntervalSeconds());
-			playChime(this.isBreakTime);
+			this.callbacks.playChime(this.isBreakTime);
 		} else {
 			this.setSecsLeft(this.secsLeft - 1);
 		}
 	}
-	start() {
+
+	start(startTime) {
 		if (this.tickInterval === null) { // else, already in progress
+			this.startPeg = (typeof startTime !== 'object') ? new Date() : startTime;
 			this.tick();
 		}
 		this.setIsPaused(false);
@@ -64,25 +84,29 @@ class Timer {
 		if (this.tickInterval !== null) {
 			clearInterval(this.tickInterval);
 			this.tickInterval = null;
+			this.startPeg = null;
 		}
 		this.setIsPaused(true);
 	}
 
 	zeroify() {
-		this.syncToState(true, !this.isBreakTime, this.getOtherIntervalSeconds());
+		this.syncToState(this.workBreakIntervals, true, !this.isBreakTime, this.getOtherIntervalSeconds());
 	}
 
 	exportState() {
 		return {
+			workBreakIntervals: this.workBreakIntervals,
 			isPaused: this.isPaused,
 			isBreakTime: this.isBreakTime,
 			secsLeftAtTimestamp: this.secsLeft,
+			lastStartTime: this.startPeg,
 			timestamp: new Date().toISOString()
 		}
 	}
 
-	syncToState(isPaused, isBreakTime, secsLeftAtTimestamp, timestamp) {
+	syncToState(wbIntervals, isPaused, isBreakTime, secsLeftAtTimestamp, timestamp) {
 		// if (isBreakTime != this.isBreakTime) this.toggleWorkBreak();
+		this.setNewIntervals(wbIntervals);
 		this.setIsBreak(isBreakTime);
 		this.pause();
 
@@ -96,19 +120,21 @@ class Timer {
 		
 		const curIntervalMs = 1000*this.getCurrentIntervalSeconds();
 		const otherIntervalMs = 1000*this.getOtherIntervalSeconds();
-		debugger;
-		while (msSinceTimestamp >= curIntervalMs + otherIntervalMs) msSinceTimestamp -= 1000*period;
+		const periodMs = curIntervalMs + otherIntervalMs;
+		while (msSinceTimestamp >= periodMs) msSinceTimestamp -= periodMs;
 
 		let computedMsLeft = 1000*secsLeftAtTimestamp - msSinceTimestamp;
-		if (msSinceTimestamp > 1000*secsLeftAtTimestamp) {
+		if (msSinceTimestamp > 1000*secsLeftAtTimestamp && msSinceTimestamp <= 1000*(secsLeftAtTimestamp + otherIntervalMs)) {
+			this.setIsBreak(!this.isBreakTime);
 			computedMsLeft += otherIntervalMs;
 		} else if (msSinceTimestamp > 1000*(secsLeftAtTimestamp + otherIntervalMs)) {
-			computedMsLeft += otherIntervalMs + curIntervalMs;
+			computedMsLeft += periodMs;
 		}
 		let newSecsLeft = Math.floor(computedMsLeft/1000);
 		this.setSecsLeft(newSecsLeft);
-		this.setIsPaused(false);
-		setTimeout(this.tick.bind(this), computedMsLeft - newSecsLeft*1000);
+		setTimeout(this.start.bind(this), computedMsLeft - newSecsLeft*1000)
+		// this.setIsPaused(false);
+		// setTimeout(this.tick.bind(this), computedMsLeft - newSecsLeft*1000);
 	}
 
 	dateToHMS(d) {
@@ -116,6 +142,6 @@ class Timer {
 	}
 
 	toString() {
-		return `Timer: ${this.isPaused ? "Paused" : "Ticking"} | ${this.isBreakTime ? "Break" : "Work"} | ${this.dateToHMS(new Date(this.secsLeft))} remaining. Intervals are ${this.workBreakIntervals}`;
+		return `${this.isPaused ? "PAUS" : "TICK"} | ${this.isBreakTime ? "BRK" : "WRK"} | ${this.dateToHMS(new Date(this.secsLeft*1000))} | ${this.workBreakIntervals}`;
 	}
 }

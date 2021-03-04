@@ -3,20 +3,17 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<link rel="stylesheet" href="/static/app.css">
+	<!-- <link rel="stylesheet" href="/static/app.css"> -->
 	<title>Copomo</title>
 </head>
 <body>
 	<div class="container">
-		<div class="timercontainer">
-			<div id="mode"></div>
-			<div id="timer"></div>
-			<button id="startstop" class="start">Start</button>
-			<button id="zeroify">End Period</button>
-		</div>
-		<div id="footer">Sound from https://www.zapsplat.com</div>
+		<div class="instructions">Use only alphanumeric characters and dashes for the session name.</div>
+		<label for="name">Copomo Room Name: </label>
+			<input type="text" id="name" name="name" required minlength="3" maxlength="30" size="30">
+		<br>
+		<button id="submit">Create</button>
 	</div>
-	<script src="/static/timer.js"></script>
-	<script src="/static/app.js"></script>
+	<script src="/static/create_session.js"></script>
 </body>
 </html>

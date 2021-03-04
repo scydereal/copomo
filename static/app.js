@@ -1,4 +1,3 @@
-
 const timestr = () => {
 	return new Date().toISOString().substr(11, 8);
 }
@@ -12,28 +11,48 @@ const timerDiv = document.getElementById('timer');
 const startStop = document.getElementById('startstop')
 const zeroifyButton = document.getElementById('zeroify');
 
-const showTimeMS = (s) => { timerDiv.textContent = new Date(s * 1000).toISOString().substr(14, 5); }
+const changeIntervalsForm = document.querySelector('.change-intervals');
+const submitIntervalsButton = document.getElementById('submit-intervals');
+
+// these don't work
+// const workMinsInput = document.getElementById('workmins');
+// const breakMinsInput = document.getElementById('breakMins');
+
+const showTimeMS = (s) => {
+	timerDiv.textContent = new Date(s * 1000).toISOString().substr(14, 5);
+	document.title = timerDiv.textContent;
+}
 const showTimeHMS = (s) => { timerDiv.textContent = new Date(s * 1000).toISOString().substr(11, 8); }
 let showTimeCallback = showTimeMS;
-function showHourInTimer(b) {
+function setWhetherHourShownInTimer(b) {
 	showTimeCallback = b ? showTimeHMS : showTimeMS;
-	timerDiv.style.fontSize = b ? '40px' : '70px';
+	timerDiv.style.fontSize = b ? '45px' : '70px';
 }
 
 const timerCallbacks = {
+	onIntervalChange: function(wsecs, bsecs) {
+		document.getElementById('workmins').value = Math.floor(wsecs/60);
+		document.getElementById('breakmins').value = Math.floor(bsecs/60);
+		setWhetherHourShownInTimer(wsecs >= 3600 || bsecs >= 3600);
+	},
 	onTimeChange: function(secs) {
 		showTimeCallback(secs);
 	},
 	setUIToBreak: function() {
 		mode.textContent = 'REAPING';
-		mode.parentElement.style.color = 'goldenrod';
+		mode.parentElement.style.color = 'cadetblue';
 	},
 	setUIToWork: function() {
 		mode.textContent = 'SOWING';
-		mode.parentElement.style.color = 'cadetblue';
+		mode.parentElement.style.color = '#CB721C';
 	},
-	playChime(isWorkThatEnded) {
-		audio[Number(isBreakTime)].play();
+	playChime(isBreakTime) {
+		// let playPromise = audio[Number(isBreakTime)].play();
+		// and oh my god do I
+		try {
+			audio[Number(isBreakTime)].play()
+		} catch(e) {
+		}
 	},
 	onStart: function() {
 		startStop.textContent = 'Pause';
@@ -45,26 +64,37 @@ const timerCallbacks = {
 const timer = new Timer(timerCallbacks);
 
 // Websocket setup
-const socket = new WebSocket('wss://pomo.scyy.fi');
+const wsAddr = 'wss' + window.location.href.slice(5); // slice out 'https'
+console.log(wsAddr)
+const socket = new WebSocket(wsAddr);
 socket.addEventListener('open', (evt) => { prn("Opened socket") });
 socket.addEventListener('message', (evt) => {
 	const nowISO = new Date().toISOString();
-	prn("From server: " + evt.data);
 	const message = JSON.parse(evt.data);
+	const serverState = message.state;
+
+	prn(`${message.event} from server:" + ${JSON.stringify(serverState)}`);
 	switch(message.event) {
 		case 'start':
-			timer.start();
+			timer.start(serverState.lastStartTime);
+			prn(timer.toString() + " <= remote start");
 			break;
 		case 'stop':
 			timer.pause();
+			prn(timer.toString() + " <= remote pause");
 			break;
 		case 'zeroify':
+			timer.setIsBreak(!message.state.isBreakTime); // precaution - timer can be off by several seconds, don't want other client zeroifying when they're at 1second left until break and this client is 1 second into break
 			timer.zeroify();
+			prn(timer.toString() + " <= remote zeroify");
 			break;
+		case 'intervalChange':
+			timer.setNewIntervals(serverState.workBreakIntervals);
+			prn(timer.toString() + " <= remote intervalchange");
 		case 'initStatePush' :
-			const serverState = message.state;
 			if (serverState) {
-				timer.syncToState(serverState.isPaused, serverState.isBreakTime, serverState.secsLeftAtTimestamp, serverState.timestamp);
+				timer.syncToState(serverState.workBreakIntervals, serverState.isPaused, serverState.isBreakTime, serverState.secsLeftAtTimestamp, serverState.timestamp);
+				prn(timer.toString() + " <= remote statePush");
 			}
 			break;
 	}
@@ -78,16 +108,17 @@ window.onbeforeunload = function() {
 }
 
 startStop.addEventListener('click', function(e) {
+	e.preventDefault();
 	if (timer.isPaused) {
-		prn("Timer start");
 		timer.start();
+		prn(timer.toString() + " <= local start");
 		socket.send(JSON.stringify({
 			event: 'start',
 			state: timer.exportState()
 		}));
 	} else {
-		prn("Timer pause");
 		timer.pause();
+		prn(timer.toString() + " <= local pause");
 		socket.send(JSON.stringify({
 			event: 'stop',
 			state: timer.exportState()
@@ -96,8 +127,9 @@ startStop.addEventListener('click', function(e) {
 });
 
 zeroifyButton.addEventListener('click', function(e) {
-	prn("Timer zeroify");
+	e.preventDefault(); // somehow interval tries to submit
 	timer.zeroify();
+	prn(timer.toString() + " <= local zeroify");
 	socket.send(JSON.stringify({
 		event: 'zeroify',
 		state: timer.exportState()
@@ -105,6 +137,20 @@ zeroifyButton.addEventListener('click', function(e) {
 });
 
 timerDiv.addEventListener('click', function(e) {
-	console.log("show way to change interval len");
-	showHourInTimer(true);
+	changeIntervalsForm.style.display = changeIntervalsForm.style.display === "none" ? "block" : "none";
+});
+
+submitIntervalsButton.addEventListener('click', function(e) {
+	e.preventDefault();
+	const workMins = document.getElementById('workmins').value;
+	const breakMins = document.getElementById('breakmins').value;
+	timer.setNewIntervals([workMins*60, breakMins*60]);
+	prn(timer.toString() + " <= local intervalchange");
+	socket.send(JSON.stringify({
+		event: 'intervalChange',
+		state: timer.exportState()
+	}));
+
+	// hide interval change form
+	changeIntervalsForm.style.display = "none";
 });
