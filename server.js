@@ -101,7 +101,7 @@ wss.on('connection', (socket, req) => {
 		return;
 	}
 	const sessionObj = sessions[sessionName];
-	console.log("New connection in session", sessionName, sessionObj.name);
+	prn(`New connection in session ${sessionName}`);
 
 	const socketId = nextClientSocketId++;
 	sessionObj.clients.push({id: socketId, socketObj: socket});

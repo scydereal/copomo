@@ -49,18 +49,21 @@ class Timer {
 		this.callbacks.onIntervalChange(arr[0], arr[1]);
 	}
 
+	calculateTimeout(startTime) {
+		const startMsMod = (startTime.getMilliseconds() + 10)%1000;
+		const now = new Date();
+		const msSinceStart = now - startTime;
+		const floorMsSinceStart = 1000*Math.floor(msSinceStart/1000);
+		let msSinceOfStartNextTick = floorMsSinceStart + startMsMod;
+		if (msSinceOfStartNextTick <= msSinceStart) msSinceOfStartNextTick += 1000;
+		let timeoutMs = msSinceOfStartNextTick - msSinceStart;
+
+		console.log(`startMsOffset = ${startMsMod}. It's been ${now.getSeconds()}.${now.getMilliseconds()} - ${startTime.getSeconds()}.${startTime.getMilliseconds()} ${msSinceStart/1000}s since start, and the next tick should be ${msSinceOfStartNextTick/1000}s after start. So timeout ms is set to ${timeoutMs}`)
+		return timeoutMs;
+	}
+
 	tick() {
-		let timeoutMs = 1000;
-		if (this.lastTickTime !== undefined) {
-			// TODO: this is no good either.
-			const now = new Date();
-			const msSinceLastTick = now - this.lastTickTime;
-			this.lastTickTime = now;
-			timeoutMs = 2000 - msSinceLastTick;
-		} else {
-			this.lastTickTime = new Date();
-		}
-		
+		let timeoutMs = this.calculateTimeout(this.startPeg);
 		this.tickInterval = setTimeout(this.tick.bind(this), timeoutMs);
 
 		if (this.secsLeft <= 0) {
@@ -68,13 +71,16 @@ class Timer {
 			this.setSecsLeft(this.getCurrentIntervalSeconds());
 			this.callbacks.playChime(this.isBreakTime);
 		} else {
-			this.setSecsLeft(this.secsLeft - 1);
+			const msSinceStart = new Date() - this.startPeg;
+			const newSecsLeft = this.secsLeftAtLastStart - Math.ceil(msSinceStart/1000); 
+			this.setSecsLeft(newSecsLeft);
 		}
 	}
 
 	start(startTime) {
 		if (this.tickInterval === null) { // else, already in progress
-			this.startPeg = (typeof startTime !== 'object') ? new Date() : startTime;
+			this.startPeg = startTime;
+			this.secsLeftAtLastStart = this.secsLeft;
 			this.tick();
 		}
 		this.setIsPaused(false);
@@ -132,9 +138,7 @@ class Timer {
 		}
 		let newSecsLeft = Math.floor(computedMsLeft/1000);
 		this.setSecsLeft(newSecsLeft);
-		setTimeout(this.start.bind(this), computedMsLeft - newSecsLeft*1000)
-		// this.setIsPaused(false);
-		// setTimeout(this.tick.bind(this), computedMsLeft - newSecsLeft*1000);
+		setTimeout(this.start.bind(this, new Date(timestamp)), computedMsLeft - newSecsLeft*1000)
 	}
 
 	dateToHMS(d) {

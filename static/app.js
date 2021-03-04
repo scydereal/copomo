@@ -47,7 +47,8 @@ const timerCallbacks = {
 		mode.parentElement.style.color = '#CB721C';
 	},
 	playChime(isBreakTime) {
-		// let playPromise = audio[Number(isBreakTime)].play();
+		// audio[Number(isBreakTime)].play();
+		// will crash if user has not interacted with page yet - sounds are illegal until they do
 		// and oh my god do I
 		try {
 			audio[Number(isBreakTime)].play()
@@ -110,7 +111,7 @@ window.onbeforeunload = function() {
 startStop.addEventListener('click', function(e) {
 	e.preventDefault();
 	if (timer.isPaused) {
-		timer.start();
+		timer.start(new Date());
 		prn(timer.toString() + " <= local start");
 		socket.send(JSON.stringify({
 			event: 'start',
