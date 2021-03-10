@@ -6,10 +6,11 @@ class Timer {
 		this.callbacks = callbacks;
 
 		this.workBreakIntervals = [workMins * 60, breakMins * 60];
-		this.isBreakTime = false;
 		this.isPaused = true;
+		this.isBreakTime = false;
 		this.secsLeft = this.getCurrentIntervalSeconds();
 		this.startPeg = null;
+		this.secsLeftAtLastStart = null;
 
 		this.setIsBreak(false); // this touches 'isBreakTime' but JS won't recognize the object member as being established in the constructor unless I touch it literally within the function. Ugh.
 		this.setIsPaused(true);
@@ -58,7 +59,7 @@ class Timer {
 		if (msSinceOfStartNextTick <= msSinceStart) msSinceOfStartNextTick += 1000;
 		let timeoutMs = msSinceOfStartNextTick - msSinceStart;
 
-		console.log(`startMsOffset = ${startMsMod}. It's been ${now.getSeconds()}.${now.getMilliseconds()} - ${startTime.getSeconds()}.${startTime.getMilliseconds()} ${msSinceStart/1000}s since start, and the next tick should be ${msSinceOfStartNextTick/1000}s after start. So timeout ms is set to ${timeoutMs}`)
+		this.callbacks.timeprn(`startMsOffset = ${startMsMod}. It's been ${now.getSeconds()}.${now.getMilliseconds()} - ${startTime.getSeconds()}.${startTime.getMilliseconds()} => ${msSinceStart/1000}s since start, and the next tick should be ${msSinceOfStartNextTick/1000}s after start. So timeout ms is set to ${timeoutMs}, and secsLeft will be ${this.secsLeftAtLastStart} - {Math.ceil(msSinceStart/1000)}`)
 		return timeoutMs;
 	}
 
@@ -69,6 +70,8 @@ class Timer {
 		if (this.secsLeft <= 0) {
 			this.toggleWorkBreak();
 			this.setSecsLeft(this.getCurrentIntervalSeconds());
+			this.startPeg = new Date();
+			this.secsLeftAtLastStart = this.secsLeft; // augh!
 			this.callbacks.playChime(this.isBreakTime);
 		} else {
 			const msSinceStart = new Date() - this.startPeg;
@@ -110,11 +113,12 @@ class Timer {
 		}
 	}
 
-	syncToState(wbIntervals, isPaused, isBreakTime, secsLeftAtTimestamp, timestamp) {
+	syncToState(wbIntervals, isPaused, isBreakTime, secsLeftAtTimestamp, lastStartTime, timestamp) {
 		// if (isBreakTime != this.isBreakTime) this.toggleWorkBreak();
 		this.setNewIntervals(wbIntervals);
 		this.setIsBreak(isBreakTime);
 		this.pause();
+		this.startPeg = lastStartTime;
 
 		if (isPaused) {
 			this.setSecsLeft(secsLeftAtTimestamp);
@@ -122,18 +126,18 @@ class Timer {
 		}
 
 		let curTime = new Date().toISOString();
-		let msSinceTimestamp = new Date(curTime) - new Date(timestamp); // silly hack required to avoid date being weird
+		let msSinceStart = new Date(curTime) - new Date(lastStartTime);
 		
 		const curIntervalMs = 1000*this.getCurrentIntervalSeconds();
 		const otherIntervalMs = 1000*this.getOtherIntervalSeconds();
 		const periodMs = curIntervalMs + otherIntervalMs;
-		while (msSinceTimestamp >= periodMs) msSinceTimestamp -= periodMs;
+		while (msSinceStart >= periodMs) msSinceStart -= periodMs;
 
-		let computedMsLeft = 1000*secsLeftAtTimestamp - msSinceTimestamp;
-		if (msSinceTimestamp > 1000*secsLeftAtTimestamp && msSinceTimestamp <= 1000*(secsLeftAtTimestamp + otherIntervalMs)) {
+		let computedMsLeft = 1000*secsLeftAtTimestamp - msSinceStart;
+		if (msSinceStart > 1000*secsLeftAtTimestamp && msSinceStart <= 1000*(secsLeftAtTimestamp + otherIntervalMs)) {
 			this.setIsBreak(!this.isBreakTime);
 			computedMsLeft += otherIntervalMs;
-		} else if (msSinceTimestamp > 1000*(secsLeftAtTimestamp + otherIntervalMs)) {
+		} else if (msSinceStart > 1000*(secsLeftAtTimestamp + otherIntervalMs)) {
 			computedMsLeft += periodMs;
 		}
 		let newSecsLeft = Math.floor(computedMsLeft/1000);

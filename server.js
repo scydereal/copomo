@@ -119,7 +119,7 @@ wss.on('connection', (socket, req) => {
 				});
 				prn(`Removed connection ${socketId}, connections are now ${sessionObj.clients.map((c) => c.id)}`);
 				if (sessionObj.clients.length == 0 && !(sessionName in permaSessions)) {
-					prn(`Removing session ${sessionName}`);
+					prn(`Removing session ${sessionName}`, sessionName in permaSessions, permaSessions);
 					delete sessions.sessionName;
 				}
 				break;

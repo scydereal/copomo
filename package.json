@@ -1,0 +1,21 @@
+{
+  "name": "2021pomo",
+  "version": "1.0.0",
+  "description": "Pomo web app in Node",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"no tests yet\"",
+    "start": "node server.js"
+  },
+  "keywords": [
+    "node",
+    "pomo"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "fs": "0.0.1-security",
+    "path": "^0.12.7",
+    "ws": "^7.4.3"
+  }
+}

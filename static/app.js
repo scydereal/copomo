@@ -30,6 +30,7 @@ function setWhetherHourShownInTimer(b) {
 }
 
 const timerCallbacks = {
+	timeprn: prn,
 	onIntervalChange: function(wsecs, bsecs) {
 		document.getElementById('workmins').value = Math.floor(wsecs/60);
 		document.getElementById('breakmins').value = Math.floor(bsecs/60);
@@ -77,7 +78,8 @@ socket.addEventListener('message', (evt) => {
 	prn(`${message.event} from server:" + ${JSON.stringify(serverState)}`);
 	switch(message.event) {
 		case 'start':
-			timer.start(serverState.lastStartTime);
+			timer.setSecsLeft(serverState.secsLeftAtTimestamp);
+			timer.start(new Date(serverState.lastStartTime));
 			prn(timer.toString() + " <= remote start");
 			break;
 		case 'stop':
@@ -94,7 +96,7 @@ socket.addEventListener('message', (evt) => {
 			prn(timer.toString() + " <= remote intervalchange");
 		case 'initStatePush' :
 			if (serverState) {
-				timer.syncToState(serverState.workBreakIntervals, serverState.isPaused, serverState.isBreakTime, serverState.secsLeftAtTimestamp, serverState.timestamp);
+				timer.syncToState(serverState.workBreakIntervals, serverState.isPaused, serverState.isBreakTime, serverState.secsLeftAtTimestamp, serverState.lastStartTime, serverState.timestamp);
 				prn(timer.toString() + " <= remote statePush");
 			}
 			break;
