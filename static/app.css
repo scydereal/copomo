@@ -15,6 +15,22 @@ body {
 	margin-top: 10%;
 }
 
+.session-name-label {
+	color: cadetblue;
+	font-size: 35px;
+	font-family: "stmarie", Arial, sans-serif;
+}
+
+
+.create-session-instructions {
+	margin-top: 7px;
+	width: 270px;
+	text-align: center;
+	opacity: 0.35;
+	font-size: 14px;
+	font-family: Arial, Helvetica, sans-serif;
+}
+
 .timercontainer {
 	display: flex;
 	flex-direction: column;
@@ -60,27 +76,24 @@ button:hover {
 	overflow: hidden;
 	width: 100%;
 	padding-left: 25px;
-
-	/* flex-direction: column;
-	align-items: center; */
 }
-
 
 label {
 	color: white;
 	opacity: 0.65;
-	font-family:  sans-serif;
-	font-size: 14px;
+	font-family: sans-serif;
+	font-size: 15px;
 }
-
 input {
 	border: 0;
+	border-bottom: 2px solid gray;
 	outline: none;
 	/* border-bottom: 1px solid white; */
 	background: transparent;
 	color: white;
-	width: 50px;
-	font-size: 18px;
+	/* width: 50px; */
+	margin-left: 10px;
+	font-size: 15px;
 	-webkit-appearance: none;
 	-moz-appearance: textfield;
 }
@@ -103,8 +116,10 @@ input:focus {
 }
 
 #footer {
-	font-size: 12px;
+	max-width: 350px;
+	font-size: 13px;
 	position: absolute;
-	bottom: 15px;
-	opacity: 0.8;
+	text-align: center;
+	bottom: 20px;
+	opacity: 0.7;
 }

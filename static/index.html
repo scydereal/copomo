@@ -4,13 +4,16 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<!-- <link rel="stylesheet" href="/static/app.css"> -->
+	<link rel="stylesheet" href="/static/app.css">
+	<link rel="icon" type="image/x-icon" href="static/favicon.ico"/>
 	<title>Copomo</title>
 </head>
 <body>
 	<div class="container">
-		<div class="instructions">Use only alphanumeric characters and dashes for the session name.</div>
-		<label for="name">Copomo Room Name: </label>
-			<input type="text" id="name" name="name" required minlength="3" maxlength="30" size="30">
+		<label class="session-name-label" for="name">COPOMO NAME</label>
+		<br />
+		<input type="text" id="name" name="name" required minlength="3" maxlength="25" size="25">
+		<div class="create-session-instructions">Use only alphanumeric characters and dashes for the session name.</div>
 		<br>
 		<button id="submit">Create</button>
 	</div>

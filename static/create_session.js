@@ -12,7 +12,7 @@ document.getElementById('submit').addEventListener('click', function(e) {
 		const statusCode = this.status; // xhr.status
 		// const response = this.responseText;
 		if (statusCode === 409) {
-			console.log("Session name is taken");
+			alert("Session name is taken, try something else.");
 		} else if (statusCode === 200) {
 			window.location.href = "https://pomo.scyy.fi/" + name;
 		}

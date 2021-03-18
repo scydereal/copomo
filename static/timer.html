@@ -4,6 +4,7 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="/static/app.css">
+	<link rel="icon" type="image/x-icon" href="static/favicon.ico"/>
 	<title>Copomo</title>
 </head>
 <body>
@@ -12,7 +13,7 @@
 			<div id="mode"></div>
 			<div id="timer"></div>
 			<form class="change-intervals">
-				<label for="workmins">Work minutes: </label>
+				<label for="workmins">Work minutes : </label>
   				<input type="number" id="workmins" name="workmins" value="40" min="1" max="1439">
 				<br>
 				<label for="breakmins">Break minutes: </label>
@@ -26,7 +27,11 @@
 			<button id="startstop" class="start">Start</button>
 			<button id="zeroify">End Period</button>
 		</div>
-		<div id="footer">Sound from https://www.zapsplat.com</div>
+		<div id="footer">
+			Click on the countdown to change intervals. Send your friends the url of this page to be on the same work timer.
+			<br /><br />
+			Sound from https://www.zapsplat.com
+		</div>
 	</div>
 	<script src="/static/timer.js"></script>
 	<script src="/static/app.js"></script>
