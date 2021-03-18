@@ -5,7 +5,7 @@ const prn = (s) => {
 	console.log(`[${timestr()}] ${s}`);
 }
 
-const audio = [new Audio('static/chime_cheeky.mp3'), new Audio('static/doublechime.mp3')]; // Last left off searching: https://www.zapsplat.com/sound-effect-category/fantasy/page/13/
+const audio = [new Audio('static/chimes/chime_cheeky.mp3'), new Audio('static/chimes/doublechime.mp3')]; // Last left off searching: https://www.zapsplat.com/sound-effect-category/fantasy/page/13/
 const mode = document.getElementById('mode');
 const timerDiv = document.getElementById('timer');
 const startStop = document.getElementById('startstop')

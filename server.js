@@ -18,6 +18,7 @@ const sessions = {
 			// {id: 1234, socketObj: socketObj}
 		]
 	}
+
 };
 
 const server = http.createServer(function (req, res) {
